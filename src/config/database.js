@@ -1,7 +1,5 @@
-const path = require('path');
-
 require('dotenv').config({
-  path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+  path: process.env.NODE_ENV === 'development' ? '.env.test' : '.env',
 });
 
 module.exports = {
@@ -11,7 +9,7 @@ module.exports = {
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
   dialect: process.env.DB_DIALECT || 'postgres',
-  ...(process.env.NODE_ENV !== 'test' && {
+  ...(process.env.NODE_ENV !== 'development' && {
     dialectOptions: {
       ssl: {
         require: true,

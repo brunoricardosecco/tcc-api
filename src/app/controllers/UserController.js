@@ -19,8 +19,8 @@ class UserController {
         }
       }
 
-      const { name, nickname, email, password, passwordConfirmation } =
-        request.body;
+      const { name, email, password, passwordConfirmation } = request.body;
+      const file = request?.file;
 
       if (password !== passwordConfirmation) {
         return response
@@ -44,9 +44,9 @@ class UserController {
 
       const user = await User.create({
         name,
-        nickname,
         email,
         password: hashedPassword,
+        photo: file.filename || '',
       });
 
       return response.status(201).json({ user });
