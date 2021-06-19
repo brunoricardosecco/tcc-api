@@ -1,0 +1,32 @@
+{
+  "name": "web2-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "start:dev": "DEBUG=sequelize:sql* nodemon src/server.js",
+    "start:hom": "DEBUG=sequelize:sql* NODE_ENV=test nodemon src/server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^9.0.2",
+    "express": "^4.17.1",
+    "gitmoji-cli": "^4.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "morgan": "^1.10.0",
+    "pg": "^8.6.0",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^6.6.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.26.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "nodemon": "^2.0.7",
+    "sequelize-cli": "^6.2.0"
+  }
+}
