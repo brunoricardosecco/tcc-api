@@ -7,17 +7,19 @@ const authMiddleware = require('../app/middlewares/auth');
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination(_, __, cb) {
+    destination(req, __, cb) {
+      console.log(req, '1');
       cb(null, './public/uploads');
     },
-    filename(_, file, cb) {
+    filename(req, file, cb) {
+      console.log(file, 'ssssssss', req);
       cb(null, `${new Date().valueOf()}_${file.originalname}`);
     },
   }),
 });
 
 routes.get('/', (_, res) => res.status(200).json({ message: 'connected' }));
-routes.post('/user', upload.single('image'), UserController.store);
+routes.post('/user', upload.single('file'), UserController.store);
 routes.post('/authenticate', UserController.authenticate);
 
 routes.use(authMiddleware);

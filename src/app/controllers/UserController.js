@@ -46,7 +46,7 @@ class UserController {
         name,
         email,
         password: hashedPassword,
-        photo: file.filename || '',
+        photo: file?.filename || '',
       });
 
       return response.status(201).json({ user });
