@@ -8,11 +8,9 @@ const authMiddleware = require('../app/middlewares/auth');
 const upload = multer({
   storage: multer.diskStorage({
     destination(req, __, cb) {
-      console.log(req, '1');
       cb(null, './public/uploads');
     },
     filename(req, file, cb) {
-      console.log(file, 'ssssssss', req);
       cb(null, `${new Date().valueOf()}_${file.originalname}`);
     },
   }),
