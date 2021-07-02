@@ -9,14 +9,14 @@ module.exports = {
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
   dialect: process.env.DB_DIALECT || 'postgres',
-  ...(process.env.NODE_ENV !== 'development' && {
+  /* ...(process.env.NODE_ENV !== 'development' && {
     dialectOptions: {
       ssl: {
         require: true,
         rejectUnauthorized: false,
       },
     },
-  }),
+  }), */
   operatorAliases: false,
   logging: false,
   define: {
