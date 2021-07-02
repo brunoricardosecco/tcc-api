@@ -1,4 +1,3 @@
-#
+# API FOR MY TCC
 
-- Bruno Ricardo Secco. RA: 1750879
-- [Project 1 Deployment Link](https://web-2-project-1.vercel.app/)
+An API I've working on for my TCC. I'm using Docker, Node, Express JS, Sequelize ORM, Postgres, and Multer.
