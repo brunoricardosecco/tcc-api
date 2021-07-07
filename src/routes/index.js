@@ -31,5 +31,6 @@ routes.use(authMiddleware);
 routes.get('/me', UserController.findUser);
 
 routes.post('/favorite', FavoriteController.store);
+routes.delete('/favorite/:id', FavoriteController.destroy);
 
 module.exports = routes;

@@ -44,6 +44,26 @@ class FavoriteController {
       return response.status(500).json({ message: 'Internal server error' });
     }
   }
+
+  async destroy(request, response) {
+    try {
+      if (!request.params.id) {
+        return response
+          .status(400)
+          .json({ message: 'Favorite id must be provided' });
+      }
+      const { id } = request.params;
+
+      const deletedFavorite = await Favorite.destroy({
+        where: { id },
+      });
+
+      return response.status(200).json({ favorite: deletedFavorite });
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
 }
 
 module.exports = new FavoriteController();
