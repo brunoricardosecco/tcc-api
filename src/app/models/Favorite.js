@@ -36,5 +36,18 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
+  Favorite.prototype.toJSON = function () {
+    const values = {
+      ...this.get(),
+    };
+
+    delete values.user_id;
+    delete values.favorite_id;
+    delete values.updated_at;
+    delete values.created_at;
+
+    return values;
+  };
+
   return Favorite;
 };

@@ -1,4 +1,4 @@
-const { Favorite } = require('../models');
+const { Favorite, User } = require('../models');
 
 class FavoriteController {
   async store(request, response) {
@@ -39,6 +39,28 @@ class FavoriteController {
       });
 
       return response.status(201).json({ favorite });
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  async index(request, response) {
+    try {
+      const { userId } = request;
+
+      const favorites = await Favorite.findAll({
+        where: {
+          user_id: userId,
+        },
+        include: [
+          {
+            model: User,
+            as: 'favoriteUser',
+          },
+        ],
+      });
+      return response.status(201).json({ favorites });
     } catch (error) {
       console.log(error);
       return response.status(500).json({ message: 'Internal server error' });
