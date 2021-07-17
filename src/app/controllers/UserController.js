@@ -1,4 +1,7 @@
-const { User } = require('../models');
+const path = require('path');
+const fs = require('fs');
+
+const { User, Favorite } = require('../models');
 const { encryptPassword } = require('../helpers');
 
 class UserController {
@@ -56,6 +59,34 @@ class UserController {
     }
   }
 
+  async index(request, response) {
+    try {
+      const { userId } = request;
+      const users = await User.findAll({});
+
+      const assignFavoritedUsers = users.map(async (user) => {
+        const favorite = await Favorite.findOne({
+          where: {
+            user_id: userId,
+            favorite_id: user.id,
+          },
+        });
+        const newUser = { ...user.toJSON() };
+        if (favorite) {
+          return Object.assign(newUser, { isFavorited: true });
+        }
+        return Object.assign(newUser, { isFavorited: false });
+      });
+
+      const formattedUsers = await Promise.all(assignFavoritedUsers);
+
+      return response.status(200).json({ users: formattedUsers });
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
   async authenticate(request, response) {
     try {
       const requiredFields = ['email', 'password'];
@@ -99,7 +130,46 @@ class UserController {
     }
   }
 
-  async findUser(request, response) {
+  async indexUnique(request, response) {
+    try {
+      const { id } = request.params;
+      const { userId } = request;
+
+      const user = await User.findByPk(id);
+
+      if (!user) {
+        return response.status(404).json({ message: 'User not found' });
+      }
+
+      const favorite = await Favorite.findOne({
+        where: {
+          user_id: userId,
+          favorite_id: id,
+        },
+      });
+
+      if (favorite) {
+        return response.status(200).json({
+          user: {
+            ...user.toJSON(),
+            isFavorited: true,
+          },
+        });
+      }
+
+      return response.status(200).json({
+        user: {
+          ...user.toJSON(),
+          isFavorited: false,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  async fullProfile(request, response) {
     try {
       const { userId } = request;
 
@@ -110,6 +180,26 @@ class UserController {
       }
 
       return response.status(200).json({ user });
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  async;
+
+  async showUserPhoto(request, response) {
+    try {
+      const { filename } = request.params;
+      const dirname = path.resolve();
+
+      const fullFilePath = path.join(dirname, `public/uploads/${filename}`);
+
+      if (!fs.existsSync(fullFilePath)) {
+        return response.status(404).json({ message: 'Photo not found' });
+      }
+
+      return response.sendFile(fullFilePath);
     } catch (error) {
       console.log(error);
       return response.status(500).json({ message: 'Internal server error' });

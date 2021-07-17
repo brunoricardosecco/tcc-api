@@ -3,7 +3,7 @@ const { Favorite, User } = require('../models');
 class FavoriteController {
   async store(request, response) {
     try {
-      const requiredFields = ['favoriteId'];
+      const requiredFields = ['favoritedUserId'];
 
       for (const field of requiredFields) {
         if (!request.body[field]) {
@@ -13,10 +13,10 @@ class FavoriteController {
         }
       }
 
-      const { favoriteId } = request.body;
+      const { favoritedUserId } = request.body;
       const { userId } = request;
 
-      if (favoriteId === userId) {
+      if (favoritedUserId === userId) {
         return response
           .status(400)
           .json({ message: "An user can't favorite herself" });
@@ -25,7 +25,7 @@ class FavoriteController {
       const existsFavorite = await Favorite.findOne({
         where: {
           user_id: userId,
-          favorite_id: favoriteId,
+          favorite_id: favoritedUserId,
         },
       });
 
@@ -35,7 +35,7 @@ class FavoriteController {
 
       const favorite = await Favorite.create({
         user_id: userId,
-        favorite_id: favoriteId,
+        favorite_id: favoritedUserId,
       });
 
       return response.status(201).json({ favorite });

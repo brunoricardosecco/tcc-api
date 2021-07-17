@@ -25,10 +25,14 @@ routes.post('/authenticate', UserController.authenticate);
 
 routes.get('/state', AddressController.indexState);
 routes.get('/state/:id/cities', AddressController.indexCities);
+routes.get('/user/photo/:filename', UserController.showUserPhoto);
 
 routes.use(authMiddleware);
 
-routes.get('/me', UserController.findUser);
+routes.get('/me', UserController.fullProfile);
+
+routes.get('/user', UserController.index);
+routes.get('/user/:id', UserController.indexUnique);
 
 routes.get('/favorite', FavoriteController.index);
 routes.post('/favorite', FavoriteController.store);
