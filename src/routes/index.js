@@ -33,9 +33,7 @@ routes.get('/me', UserController.fullProfile);
 
 routes.get('/user', UserController.index);
 routes.get('/user/:id', UserController.indexUnique);
-
-routes.get('/favorite', FavoriteController.index);
-routes.post('/favorite', FavoriteController.store);
-routes.delete('/favorite/:id', FavoriteController.destroy);
+routes.get('/user/:id/favorite', FavoriteController.store);
+routes.get('/user/:id/unfavorite', FavoriteController.destroy);
 
 module.exports = routes;

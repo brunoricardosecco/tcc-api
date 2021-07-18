@@ -1,8 +1,10 @@
 const path = require('path');
 const fs = require('fs');
+const { Op } = require('sequelize');
 
 const { User, Favorite } = require('../models');
 const { encryptPassword } = require('../helpers');
+const FavoriteController = require('./FavoriteController');
 
 class UserController {
   async store(request, response) {
@@ -62,9 +64,21 @@ class UserController {
   async index(request, response) {
     try {
       const { userId } = request;
-      const users = await User.findAll({});
+      const { onlyFavorited = null, name = '' } = request.query;
 
-      const assignFavoritedUsers = users.map(async (user) => {
+      if (onlyFavorited === 'true') {
+        return FavoriteController.index(request, response);
+      }
+
+      const users = await User.findAll({
+        where: {
+          name: {
+            [Op.iLike]: `%${name}%`,
+          },
+        },
+      });
+
+      const assignFavoritedUsersPromise = users.map(async (user) => {
         const favorite = await Favorite.findOne({
           where: {
             user_id: userId,
@@ -78,7 +92,7 @@ class UserController {
         return Object.assign(newUser, { isFavorited: false });
       });
 
-      const formattedUsers = await Promise.all(assignFavoritedUsers);
+      const formattedUsers = await Promise.all(assignFavoritedUsersPromise);
 
       return response.status(200).json({ users: formattedUsers });
     } catch (error) {
@@ -185,8 +199,6 @@ class UserController {
       return response.status(500).json({ message: 'Internal server error' });
     }
   }
-
-  async;
 
   async showUserPhoto(request, response) {
     try {

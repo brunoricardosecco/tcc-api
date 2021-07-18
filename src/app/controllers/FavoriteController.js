@@ -3,20 +3,14 @@ const { Favorite, User } = require('../models');
 class FavoriteController {
   async store(request, response) {
     try {
-      const requiredFields = ['favoritedUserId'];
-
-      for (const field of requiredFields) {
-        if (!request.body[field]) {
-          return response
-            .status(400)
-            .json({ message: `Missing param ${field}` });
-        }
+      if (!request.params.id) {
+        return response.status(400).json({ message: `Missing param ${id}` });
       }
 
-      const { favoritedUserId } = request.body;
+      const { id } = request.params;
       const { userId } = request;
 
-      if (favoritedUserId === userId) {
+      if (id === userId) {
         return response
           .status(400)
           .json({ message: "An user can't favorite herself" });
@@ -25,7 +19,7 @@ class FavoriteController {
       const existsFavorite = await Favorite.findOne({
         where: {
           user_id: userId,
-          favorite_id: favoritedUserId,
+          favorite_id: id,
         },
       });
 
@@ -33,12 +27,12 @@ class FavoriteController {
         return response.status(400).json({ message: 'User already favorited' });
       }
 
-      const favorite = await Favorite.create({
+      await Favorite.create({
         user_id: userId,
-        favorite_id: favoritedUserId,
+        favorite_id: id,
       });
 
-      return response.status(201).json({ favorite });
+      return response.status(201).json({ message: 'success' });
     } catch (error) {
       console.log(error);
       return response.status(500).json({ message: 'Internal server error' });
@@ -75,12 +69,16 @@ class FavoriteController {
           .json({ message: 'Favorite id must be provided' });
       }
       const { id } = request.params;
+      const { userId } = request;
 
-      const deletedFavorite = await Favorite.destroy({
-        where: { id },
+      await Favorite.destroy({
+        where: {
+          user_id: userId,
+          favorite_id: id,
+        },
       });
 
-      return response.status(200).json({ favorite: deletedFavorite });
+      return response.status(200).json({ message: 'success' });
     } catch (error) {
       console.log(error);
       return response.status(500).json({ message: 'Internal server error' });
