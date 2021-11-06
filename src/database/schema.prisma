@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+
+}
+
+model City {
+
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  stateId   Int
+  state     State    @relation(fields: [stateId], references: [id])
+
+  @@map("cities")
+}
+
+model State {
+  id        Int      @id @default(autoincrement())
+  name      String
+  fu        String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  City      City[]
+
+  @@map("states")
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  name       String
+  photo      String
+  email      String   @unique
+  password   String
+  followedBy User[]   @relation("UserFollows", references: [id])
+  following  User[]   @relation("UserFollows", references: [id])
+  wallet     Wallet   @relation(fields: [walletId], references: [id])
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  walletId Int @unique
+  @@map("users")
+}
+
+model Wallet {
+  id              Int     @id @default(autoincrement())
+  invested_amount Decimal @db.Money
+  actual_amount   Decimal @db.Money
+  User            User?
+
+  @@map("wallets")
+}

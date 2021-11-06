@@ -1,10 +1,8 @@
 const path = require('path');
 const fs = require('fs');
-const { Op } = require('sequelize');
-
-const { User, Favorite } = require('../models');
-const { encryptPassword } = require('../helpers');
-const FavoriteController = require('./FavoriteController');
+const { encryptPassword, compareHashes, generateToken } = require('../helpers');
+/* const FavoriteController = require('./FavoriteController'); */
+const { database } = require('../services/database');
 
 class UserController {
   async store(request, response) {
@@ -33,7 +31,7 @@ class UserController {
           .json({ message: 'Invalid param passwordConfirmation' });
       }
 
-      const existsUser = await User.findOne({
+      const existsUser = await database.user.findUnique({
         where: {
           email,
         },
@@ -47,11 +45,21 @@ class UserController {
 
       const hashedPassword = await encryptPassword(password);
 
-      const user = await User.create({
-        name,
-        email,
-        password: hashedPassword,
-        photo: file?.filename || '',
+      const wallet = await database.wallet.create({
+        data: {
+          actual_amount: 0,
+          invested_amount: 0,
+        },
+      });
+
+      const user = await database.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          photo: file?.filename || '',
+          walletId: wallet.id,
+        },
       });
 
       return response.status(201).json({ user });
@@ -66,35 +74,28 @@ class UserController {
       const { userId } = request;
       const { onlyFavorited = null, name = '' } = request.query;
 
-      if (onlyFavorited === 'true') {
-        return FavoriteController.index(request, response);
+      if (onlyFavorited) {
+        JSON.parse(onlyFavorited);
       }
 
-      const users = await User.findAll({
+      console.log(typeof onlyFavorited);
+
+      const users = await database.user.findMany({
         where: {
           name: {
-            [Op.iLike]: `%${name}%`,
+            contains: name,
           },
+          ...(onlyFavorited && {
+            followedBy: {
+              some: {
+                id: userId,
+              },
+            },
+          }),
         },
       });
 
-      const assignFavoritedUsersPromise = users.map(async (user) => {
-        const favorite = await Favorite.findOne({
-          where: {
-            user_id: userId,
-            favorite_id: user.id,
-          },
-        });
-        const newUser = { ...user.toJSON() };
-        if (favorite) {
-          return Object.assign(newUser, { isFavorited: true });
-        }
-        return Object.assign(newUser, { isFavorited: false });
-      });
-
-      const formattedUsers = await Promise.all(assignFavoritedUsersPromise);
-
-      return response.status(200).json({ users: formattedUsers });
+      return response.status(200).json({ users });
     } catch (error) {
       console.log(error);
       return response.status(500).json({ message: 'Internal server error' });
@@ -115,7 +116,7 @@ class UserController {
 
       const { email, password } = request.body;
 
-      const existsUser = await User.findOne({
+      const existsUser = await database.user.findUnique({
         where: {
           email,
         },
@@ -127,7 +128,10 @@ class UserController {
           .json({ message: 'Invalid email or password' });
       }
 
-      const isValidPassword = await existsUser.checkPassword(password);
+      const isValidPassword = await compareHashes(
+        password,
+        existsUser.password,
+      );
 
       if (!isValidPassword) {
         return response
@@ -135,7 +139,7 @@ class UserController {
           .json({ message: 'Invalid email or password' });
       }
 
-      const access_token = existsUser.generateToken();
+      const access_token = await generateToken(existsUser);
 
       return response.status(200).json({ user: existsUser, access_token });
     } catch (error) {
@@ -147,35 +151,19 @@ class UserController {
   async indexUnique(request, response) {
     try {
       const { id } = request.params;
-      const { userId } = request;
 
-      const user = await User.findByPk(id);
+      const user = await database.user.findUnique({
+        where: {
+          id: Number(id),
+        },
+      });
 
       if (!user) {
         return response.status(404).json({ message: 'User not found' });
       }
 
-      const favorite = await Favorite.findOne({
-        where: {
-          user_id: userId,
-          favorite_id: id,
-        },
-      });
-
-      if (favorite) {
-        return response.status(200).json({
-          user: {
-            ...user.toJSON(),
-            isFavorited: true,
-          },
-        });
-      }
-
       return response.status(200).json({
-        user: {
-          ...user.toJSON(),
-          isFavorited: false,
-        },
+        user,
       });
     } catch (error) {
       console.log(error);
@@ -187,7 +175,11 @@ class UserController {
     try {
       const { userId } = request;
 
-      const user = await User.findByPk(userId);
+      const user = await database.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
 
       if (!user) {
         return response.status(404).json({ message: 'User not found' });
@@ -212,6 +204,47 @@ class UserController {
       }
 
       return response.sendFile(fullFilePath);
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  async follow(request, response) {
+    try {
+      if (!request.params.id) {
+        return response.status(400).json({ message: 'Missing param id' });
+      }
+
+      const { id } = request.params;
+      const { userId } = request;
+
+      if (Number(id) === userId) {
+        return response
+          .status(400)
+          .json({ message: "An user can't favorite herself" });
+      }
+
+      const followedUser = await database.user.findUnique({
+        where: {
+          id: Number(id),
+        },
+      });
+
+      await database.user.update({
+        where: {
+          id: Number(userId),
+        },
+        data: {
+          following: {
+            connect: {
+              id: followedUser.id,
+            },
+          },
+        },
+      });
+
+      return response.status(200).json('ok');
     } catch (error) {
       console.log(error);
       return response.status(500).json({ message: 'Internal server error' });
