@@ -1,26 +1,26 @@
-const { City, State } = require('../models');
+const { database } = require('../services/database');
 
 class AddressController {
   async indexCities(request, response) {
     try {
       const stateId = request.params.id;
 
-      const foundedCities = await City.findAll({
+      const foundCities = await database.city.findMany({
         where: {
-          state_id: stateId,
+          stateId: Number(stateId),
         },
       });
 
-      return response.status(200).json({ cities: foundedCities });
+      return response.status(200).json({ cities: foundCities });
     } catch (error) {
       console.log(error);
       return response.status(500).json({ message: 'Internal server error' });
     }
   }
 
-  async indexState(request, response) {
+  async indexState(_request, response) {
     try {
-      const foundedStates = await State.findAll({}, { subQuery: false });
+      const foundedStates = await database.state.findMany();
 
       return response.status(200).json({ states: foundedStates });
     } catch (error) {

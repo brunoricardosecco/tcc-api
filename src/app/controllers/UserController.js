@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { encryptPassword, compareHashes, generateToken } = require('../helpers');
-/* const FavoriteController = require('./FavoriteController'); */
+
 const { database } = require('../services/database');
 
 class UserController {
@@ -78,14 +78,12 @@ class UserController {
         JSON.parse(onlyFavorited);
       }
 
-      console.log(typeof onlyFavorited);
-
       const users = await database.user.findMany({
         where: {
           name: {
             contains: name,
           },
-          ...(onlyFavorited && {
+          ...(onlyFavorited === 'true' && {
             followedBy: {
               some: {
                 id: userId,
@@ -238,6 +236,47 @@ class UserController {
         data: {
           following: {
             connect: {
+              id: followedUser.id,
+            },
+          },
+        },
+      });
+
+      return response.status(200).json('ok');
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  async unfollow(request, response) {
+    try {
+      if (!request.params.id) {
+        return response.status(400).json({ message: 'Missing param id' });
+      }
+
+      const { id } = request.params;
+      const { userId } = request;
+
+      if (Number(id) === userId) {
+        return response
+          .status(400)
+          .json({ message: "An user can't unfavorite herself" });
+      }
+
+      const followedUser = await database.user.findUnique({
+        where: {
+          id: Number(id),
+        },
+      });
+
+      await database.user.update({
+        where: {
+          id: Number(userId),
+        },
+        data: {
+          following: {
+            disconnect: {
               id: followedUser.id,
             },
           },
