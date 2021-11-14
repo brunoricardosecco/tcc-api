@@ -3,6 +3,8 @@ const multer = require('multer');
 
 const UserController = require('../app/controllers/UserController');
 const AddressController = require('../app/controllers/AddressController');
+const WalletController = require('../app/controllers/WalletController');
+const TransactionController = require('../app/controllers/TransactionController');
 
 const authMiddleware = require('../app/middlewares/auth');
 
@@ -32,7 +34,12 @@ routes.get('/me', UserController.fullProfile);
 
 routes.get('/user', UserController.index);
 routes.get('/user/:id', UserController.indexUnique);
+
 routes.get('/user/:id/follow', UserController.follow);
 routes.get('/user/:id/unfollow', UserController.unfollow);
+
+routes.get('/wallets/:id', WalletController.index);
+
+routes.post('/transactions', TransactionController.store);
 
 module.exports = routes;

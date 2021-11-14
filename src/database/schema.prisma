@@ -52,10 +52,46 @@ model User {
 }
 
 model Wallet {
-  id              Int     @id @default(autoincrement())
-  invested_amount Decimal @db.Money
-  actual_amount   Decimal @db.Money
-  User            User?
+  id             Int     @id @default(autoincrement())
+  investedAmount Decimal @map("invested_amount") @db.Money
+  actualAmount   Decimal @map("actual_amount") @db.Money
+  User           User?
 
+  Transaction Transaction[]
   @@map("wallets")
+}
+
+model Transaction {
+  id                   Int                   @id @default(autoincrement())
+  type                 TransactionTypes      @default(BUY)
+  category             TransactionCategories @default(STOCKS)
+  ticker               String
+  financialInstitution String                @map("financial_institution")
+  date                 DateTime
+  quantity             Int
+  price                Decimal               @db.Money
+  totalAmount          Decimal               @default(0) @map("total_amount") @db.Money
+  walletId             Int
+  wallet               Wallet                @relation(fields: [walletId], references: [id])
+
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("transaction")
+}
+
+enum TransactionCategories {
+  STOCKS
+  IF
+  TREASURE
+
+  @@map("transaction_categories")
+}
+
+enum TransactionTypes {
+  BUY
+  SELL
+
+  @@map("transaction_types")
 }
