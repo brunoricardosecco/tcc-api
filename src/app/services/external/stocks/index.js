@@ -10,7 +10,7 @@ const api = axios.create({
 
 function getDailyStockInfo(stockTicker) {
   return api.get(
-    `/query?function=TIME_SERIES_DAILY&symbol=${stockTicker}&apikey=${apiKey}`,
+    `/query?function=GLOBAL_QUOTE&symbol=${stockTicker}&apikey=${apiKey}`,
   );
 }
 

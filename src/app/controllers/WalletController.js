@@ -1,4 +1,5 @@
 const { database } = require('../services/database');
+const { getDailyStockInfo } = require('../services/external/stocks');
 
 class WalletController {
   async index(request, response) {
@@ -15,25 +16,55 @@ class WalletController {
         where: {
           walletId,
         },
-        by: ['ticker'],
+        by: ['ticker', 'rawTicker'],
         _sum: {
           totalAmount: true,
           quantity: true,
         },
       });
 
-      const calculatedStocks = stocks.map((stock) => {
-        return {
-          ...stock,
-          averagePrice: Number(
-            Number(stock._sum.totalAmount) / stock._sum.quantity,
-          ).toFixed(2),
-        };
-      });
+      const calculatedStocks = await Promise.all(
+        stocks
+          .filter((stock) => stock._sum.quantity > 0)
+          .map(async (stock) => {
+            const { data } = await getDailyStockInfo(stock.rawTicker);
+
+            const actualPrice = data?.['Global Quote']?.['05. price'];
+
+            const averagePrice = Number(
+              Number(stock?._sum?.totalAmount) / stock._sum.quantity,
+            ).toFixed(2);
+
+            return {
+              ...stock,
+              averagePrice,
+              actualPrice,
+              actualAmount: Number(actualPrice) * stock._sum.quantity,
+              rentability: (
+                (Number(actualPrice) / Number(averagePrice)) * 100 -
+                100
+              ).toFixed(2),
+            };
+          }),
+      );
+
+      const investedAmount = calculatedStocks.reduce((acc, stock) => {
+        return acc + Number(stock._sum.totalAmount);
+      }, 0);
+
+      const actualAmount = calculatedStocks.reduce((acc, stock) => {
+        return acc + Number(stock.actualAmount);
+      }, 0);
 
       const walletWithTransactions = {
         ...wallet,
-        stocks: calculatedStocks.filter((stock) => stock._sum.quantity > 0),
+        investedAmount,
+        actualAmount,
+        rentability:
+          ((Number(actualAmount) / Number(investedAmount)) * 100 - 100).toFixed(
+            2,
+          ) || 0,
+        stocks: calculatedStocks,
       };
 
       return response.status(200).json({ wallet: walletWithTransactions });

@@ -38,7 +38,8 @@ class TransactionController {
         data: {
           type,
           category,
-          ticker,
+          ticker: ticker?.split('.')[0],
+          rawTicker: ticker,
           financialInstitution,
           date,
           quantity: type === 'BUY' ? quantity : -quantity,
@@ -46,22 +47,6 @@ class TransactionController {
           walletId,
           totalAmount:
             type === 'BUY' ? transactionTotalAmount : -transactionTotalAmount,
-        },
-      });
-
-      const foundWallet = await database.wallet.findUnique({
-        where: { id: walletId },
-      });
-
-      const investedAmount =
-        transaction.type === 'BUY'
-          ? Number(foundWallet.investedAmount) + transactionTotalAmount
-          : Number(foundWallet.investedAmount) - transactionTotalAmount;
-
-      await database.wallet.update({
-        where: { id: walletId },
-        data: {
-          investedAmount,
         },
       });
 

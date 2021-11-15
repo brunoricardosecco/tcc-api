@@ -52,10 +52,8 @@ model User {
 }
 
 model Wallet {
-  id             Int     @id @default(autoincrement())
-  investedAmount Decimal @map("invested_amount") @db.Money
-  actualAmount   Decimal @map("actual_amount") @db.Money
-  User           User?
+  id   Int   @id @default(autoincrement())
+  User User?
 
   Transaction Transaction[]
   @@map("wallets")
@@ -66,6 +64,7 @@ model Transaction {
   type                 TransactionTypes      @default(BUY)
   category             TransactionCategories @default(STOCKS)
   ticker               String
+  rawTicker            String                @default("") @map("raw_ticker")
   financialInstitution String                @map("financial_institution")
   date                 DateTime
   quantity             Int
