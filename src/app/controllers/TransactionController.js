@@ -43,7 +43,7 @@ class TransactionController {
           financialInstitution,
           date,
           quantity: type === 'BUY' ? quantity : -quantity,
-          price: type === 'BUY' ? price : -price,
+          price,
           walletId,
           totalAmount:
             type === 'BUY' ? transactionTotalAmount : -transactionTotalAmount,

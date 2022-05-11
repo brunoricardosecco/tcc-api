@@ -1,10 +1,18 @@
 const path = require('path');
 const fs = require('fs');
+const datefns = require('date-fns');
 const { encryptPassword, compareHashes, generateToken } = require('../helpers');
 
 const { database } = require('../services/database');
+const { calculateRentability } = require('../services/external/stocks');
 
 class UserController {
+  constructor() {
+    this.getRentability = this.getRentability.bind(this);
+    this.index = this.index.bind(this);
+    this.indexUnique = this.indexUnique.bind(this);
+  }
+
   async store(request, response) {
     try {
       const requiredFields = [
@@ -22,7 +30,9 @@ class UserController {
         }
       }
 
-      const { name, email, password, passwordConfirmation } = request.body;
+      const {
+        name, email, password, passwordConfirmation,
+      } = request.body;
       const file = request?.file;
 
       if (password !== passwordConfirmation) {
@@ -47,8 +57,6 @@ class UserController {
 
       const wallet = await database.wallet.create({
         data: {
-          actual_amount: 0,
-          invested_amount: 0,
         },
       });
 
@@ -93,9 +101,20 @@ class UserController {
         },
       });
 
-      return response.status(200).json({ users });
+      const withRentability = await Promise.all(
+        users.map(async (user) => {
+          const rentability = await this.getRentability(user.walletId);
+
+          return {
+            ...user,
+            rentability,
+          };
+        }),
+      );
+
+      return response.status(200).json({ users: withRentability });
     } catch (error) {
-      console.log(error);
+      console.log(error?.response?.data);
       return response.status(500).json({ message: 'Internal server error' });
     }
   }
@@ -160,8 +179,25 @@ class UserController {
         return response.status(404).json({ message: 'User not found' });
       }
 
+      const isFavorite = await database.user.findMany({
+        where: {
+          id: Number(id),
+          followedBy: {
+            some: {
+              id: request.userId,
+            },
+          },
+        },
+      });
+
+      const rentability = await this.getRentability(user.walletId);
+
       return response.status(200).json({
-        user,
+        user: {
+          ...user,
+          isFavorited: Boolean(isFavorite.length),
+        },
+        rentability,
       });
     } catch (error) {
       console.log(error);
@@ -288,6 +324,62 @@ class UserController {
       console.log(error);
       return response.status(500).json({ message: 'Internal server error' });
     }
+  }
+
+  async getRentability(receivedWalletId) {
+    const walletId = Number(receivedWalletId);
+
+    const stocks = await database.transaction.findMany({
+      where: {
+        walletId,
+      },
+    });
+
+    const req = stocks.map((stock) => ({
+      data: datefns.format(stock.date, 'yyyy-MM-dd'),
+      ativo: stock.ticker,
+      quantidade: stock.quantity,
+      preço: stock.price,
+    }));
+
+    const investedAmount = await database.transaction.aggregate({
+      where: {
+        type: {
+          equals: 'BUY',
+        },
+        walletId,
+      },
+      _sum: {
+        totalAmount: true,
+      },
+    });
+
+    const asset = await database.transaction.aggregate({
+      where: {
+        type: {
+          equals: 'SELL',
+        },
+        walletId,
+      },
+      _sum: {
+        totalAmount: true,
+      },
+    });
+
+    let data = {};
+
+    if (req.length > 0) {
+      const response = await calculateRentability(req);
+      data = response.data;
+      const keys = Object.keys(data);
+
+      const actualAmount = data[keys[keys.length - 1]].saldo;
+      const totalAsset = Math.abs(Number(asset._sum.totalAmount)) + Math.abs(actualAmount);
+      const totalAssetPercent = ((totalAsset * 100) / Number(investedAmount._sum.totalAmount)) - 100;
+
+      return totalAssetPercent;
+    }
+    return 0;
   }
 }
 

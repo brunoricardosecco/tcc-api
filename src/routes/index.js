@@ -39,6 +39,8 @@ routes.get('/user/:id/follow', UserController.follow);
 routes.get('/user/:id/unfollow', UserController.unfollow);
 
 routes.get('/wallets/:id', WalletController.index);
+routes.get('/wallets/:id/year/:year', WalletController.indexByYear);
+routes.get('/wallets/:id/years', WalletController.getYears);
 
 routes.post('/transactions', TransactionController.store);
 
