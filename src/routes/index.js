@@ -34,6 +34,7 @@ routes.get('/me', UserController.fullProfile);
 
 routes.get('/user', UserController.index);
 routes.get('/user/:id', UserController.indexUnique);
+routes.get('/user/:id/change-password', UserController.changePassword);
 
 routes.get('/user/:id/follow', UserController.follow);
 routes.get('/user/:id/unfollow', UserController.unfollow);

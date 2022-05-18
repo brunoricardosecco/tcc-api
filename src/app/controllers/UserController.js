@@ -381,6 +381,41 @@ class UserController {
     }
     return 0;
   }
+
+  async changePassword(request, response) {
+    try {
+      const { userId } = request;
+      const { oldPassword, newPassword } = request.body;
+
+      const user = await database.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (!user) {
+        return response.status(404).json({ message: 'User not found' });
+      }
+
+      if (!(await compareHashes(oldPassword, user.password))) {
+        return response.status(400).json({ message: 'Invalid password' });
+      }
+
+      await database.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          password: await encryptPassword(newPassword),
+        },
+      });
+
+      return response.status(200).json('ok');
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
 }
 
 module.exports = new UserController();
