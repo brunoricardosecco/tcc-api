@@ -34,7 +34,8 @@ routes.get('/me', UserController.fullProfile);
 
 routes.get('/user', UserController.index);
 routes.get('/user/:id', UserController.indexUnique);
-routes.get('/user/:id/change-password', UserController.changePassword);
+routes.post('/user/:id/change-password', UserController.changePassword);
+routes.put('/user/:id', UserController.updateUser);
 
 routes.get('/user/:id/follow', UserController.follow);
 routes.get('/user/:id/unfollow', UserController.unfollow);

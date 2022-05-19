@@ -36,16 +36,17 @@ model State {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  name       String
-  photo      String
-  email      String   @unique
-  password   String
-  followedBy User[]   @relation("UserFollows", references: [id])
-  following  User[]   @relation("UserFollows", references: [id])
-  wallet     Wallet   @relation(fields: [walletId], references: [id])
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id             Int      @id @default(autoincrement())
+  name           String
+  photo          String
+  email          String   @unique
+  password       String
+  isDiscoverable Boolean  @default(true)
+  followedBy     User[]   @relation("UserFollows", references: [id])
+  following      User[]   @relation("UserFollows", references: [id])
+  wallet         Wallet   @relation(fields: [walletId], references: [id])
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   walletId Int @unique
   @@map("users")

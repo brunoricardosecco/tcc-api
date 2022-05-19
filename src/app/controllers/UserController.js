@@ -416,6 +416,36 @@ class UserController {
       return response.status(500).json({ message: 'Internal server error' });
     }
   }
+
+  async updateUser(request, response) {
+    try {
+      const { userId } = request;
+
+      const user = await database.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+      if (!user) {
+        return response.status(404).json({ message: 'User not found' });
+      }
+
+      await database.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          ...request.body,
+        },
+      });
+
+      return response.status(200).json('ok');
+    } catch (error) {
+      console.log(error);
+      return response.status(500).json({ message: 'Internal server error' });
+    }
+  }
 }
 
 module.exports = new UserController();
