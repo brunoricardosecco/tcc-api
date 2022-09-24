@@ -80,7 +80,14 @@ class UserController {
   async index(request, response) {
     try {
       const { userId } = request;
-      const { onlyFavorited = null, name = '' } = request.query;
+      const {
+        onlyFavorited = null, name = '', stateId = '', cityId = '', startDate = '', endDate = '',
+      } = request.query;
+
+      console.log({
+        stateId,
+        cityId,
+      });
 
       if (onlyFavorited) {
         JSON.parse(onlyFavorited);
@@ -91,6 +98,7 @@ class UserController {
           name: {
             contains: name,
           },
+          isDiscoverable: true,
           ...(onlyFavorited === 'true' && {
             followedBy: {
               some: {
@@ -98,12 +106,20 @@ class UserController {
               },
             },
           }),
+          ...(stateId && {
+            city: {
+              stateId: Number(stateId),
+            },
+          }),
+          ...(cityId && {
+            cityId: Number(cityId),
+          }),
         },
       });
 
       const withRentability = await Promise.all(
         users.map(async (user) => {
-          const rentability = await this.getRentability(user.walletId);
+          const rentability = await this.getRentability(user.walletId, startDate, endDate);
 
           return {
             ...user,
@@ -326,14 +342,21 @@ class UserController {
     }
   }
 
-  async getRentability(receivedWalletId) {
+  async getRentability(receivedWalletId, startDate, endDate) {
     const walletId = Number(receivedWalletId);
 
     const stocks = await database.transaction.findMany({
       where: {
         walletId,
+        ...(startDate && endDate && {
+          date: {
+            lte: new Date(endDate).toISOString(),
+            gte: new Date(startDate).toISOString(),
+          },
+        }),
       },
     });
+    console.log(stocks, new Date(endDate), new Date(startDate));
 
     const req = stocks.map((stock) => ({
       data: datefns.format(stock.date, 'yyyy-MM-dd'),

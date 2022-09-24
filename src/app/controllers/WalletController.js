@@ -2,7 +2,7 @@ const datefns = require('date-fns');
 const ptBR = require('date-fns/locale/pt-BR');
 
 const { database } = require('../services/database');
-const { getDailyStockInfo, calculateRentability } = require('../services/external/stocks');
+const { calculateRentability } = require('../services/external/stocks');
 
 class WalletController {
   async index(request, response) {
@@ -37,6 +37,7 @@ class WalletController {
         },
         _sum: {
           totalAmount: true,
+          fee: true,
         },
       });
 
@@ -49,6 +50,7 @@ class WalletController {
         },
         _sum: {
           totalAmount: true,
+          fee: true,
         },
       });
 
@@ -62,7 +64,7 @@ class WalletController {
       const walletWithTransactions = {
         ...wallet,
         actualAmount,
-        investedAmount: Number(investedAmount._sum.totalAmount),
+        investedAmount: Number(investedAmount._sum.totalAmount) + Number(investedAmount._sum.fee) + Number(asset._sum.fee),
         totalAsset,
         totalAssetPercent,
         rentabilityPercent: ((data[keys[keys.length - 1]].vl_cota) - 1) * 100,

@@ -9,17 +9,16 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-
 }
 
 model City {
-
   id        Int      @id @default(autoincrement())
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   stateId   Int
   state     State    @relation(fields: [stateId], references: [id])
+  User      User[]
 
   @@map("cities")
 }
@@ -47,8 +46,11 @@ model User {
   wallet         Wallet   @relation(fields: [walletId], references: [id])
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
+  city           City?    @relation(fields: [cityId], references: [id])
 
-  walletId Int @unique
+  walletId Int  @unique
+  cityId   Int?
+
   @@map("users")
 }
 
@@ -57,6 +59,7 @@ model Wallet {
   User User?
 
   Transaction Transaction[]
+
   @@map("wallets")
 }
 
@@ -71,9 +74,9 @@ model Transaction {
   quantity             Int
   price                Decimal               @db.Money
   totalAmount          Decimal               @default(0) @map("total_amount") @db.Money
+  fee                  Decimal               @default(0) @db.Money
   walletId             Int
   wallet               Wallet                @relation(fields: [walletId], references: [id])
-
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
